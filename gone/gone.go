@@ -11,7 +11,7 @@ import (
 
 type middleware func(http.Handler) http.Handler
 
-type Route[T ...any] struct {
+type Route[T any] struct {
 
 	// middlewares to apply
 	middlewares []middleware
@@ -198,9 +198,9 @@ func (r *Route[T]) applyRoutes() {
 func (r *Route[T]) applyMiddlewares() {
 	// apply middleware
 	r.get = Chain(r.get, r.middlewares...)
-	r.post = Chain(r.get, r.middlewares...)
-	r.put = Chain(r.get, r.middlewares...)
-	r.delete = Chain(r.get, r.middlewares...)
+	r.post = Chain(r.post, r.middlewares...)
+	r.put = Chain(r.put, r.middlewares...)
+	r.delete = Chain(r.delete, r.middlewares...)
 }
 
 // Reverse the provided middleware slice, then loop through and

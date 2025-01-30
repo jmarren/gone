@@ -1,0 +1,97 @@
+---------------- Notes --------------------------
+=== some thoughts and ideas about the project ===
+-------------------------------------------------
+
+
+I'd like to be able to pass data along through a route to its
+subroutes. What is the best way to do this that will still
+provide necessary safety?
+
+|  - Generics when defining a new route
+|
+|  	-> when creating a new route,
+|	   the user could pass in a generic
+|	   that specifies the type of data 
+|	   they'd like to add to the Route
+|	   and this data will be available
+|	   to all subroutes by default
+|
+|  - Context store
+|  	
+|	-> Would this need to be different than using 
+|	   standard request context?
+|
+|	-> Could provide a service that will generate
+|	   keys and read from context in a type-safe
+|	   manner
+|
+|	-> May be sloppy and frustrating to use
+|
+|
+|  - Provide an interface on the Route type
+|
+|	-> Likely would cause type issues
+|
+|       -> The interface needs to provide a concrete
+|          type for its output, so may not be feasible
+|
+|  - Composing Handlers
+|
+|  	-> Define some way to create a handler that can pass 
+|	   along additional data to Routes when they are created
+|	   with .Then() and be made available to subroutes
+|
+|	-> Would this be better accomplished
+|	   outside of the library?
+|
+|  - Implement Using Middlewares
+|
+|	-> Allow users to easily write middlewares that
+|          can extract data from a request and pass
+|          it along to subRoutes. This may require generics
+|
+
+I also would like a way to specify how middlewares should
+be used by routes. Right now, a middleware that is passed
+to a route is applied to all methods on the route.
+
+However, I'd like the user to be able to specific if and
+how should be applied downstream to subrouters and whether
+it should be applied to the entire route or only a particular
+method
+
+|  - Provide .getUse(), .postUse(), etc. methods that will
+|    apply only to the particular method
+|
+|  - Accept and additional boolean when declaring a middleware
+|    with .Use() that determines whether it should affect 
+|    downstream routes
+|
+|  - .UseFor() method that accepts an array of http.MethodGet,
+|    http.MethodPost, etc to specify which routes to use the
+|    provided middleware for
+|
+
+Support for other HTTP methods
+
+Ability to pass in and/or configure the final serveMux
+
+The subRoutes property may not need to be a map because
+the Route object itself already stores the pattern it 
+will be serving
+
+Should the Route object be an actual tree or trie data structure?
+Is it already? It stores an array of Routes in Route.subRoutes,
+so I guess each Route is really a node in a tree.
+
+What about using a custom-built mux and trying to design 
+for better perfomance with some low-level programming similar 
+to Fiber?
+
+
+
+
+
+
+
+

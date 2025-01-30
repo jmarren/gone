@@ -11,7 +11,7 @@ import (
 
 type middleware func(http.Handler) http.Handler
 
-type Route struct {
+type Route[T ...any] struct {
 
 	// middlewares to apply
 	middlewares []middleware
@@ -35,26 +35,30 @@ type Route struct {
 	delete http.Handler
 
 	// parent
-	parent *Route
+	parent *Route[T]
 
 	// whether the route is registered
 	registered bool
 
 	// subroutes
-	subRoutes map[string]*Route
+	subRoutes map[string]*Route[T]
+
+	datastore T
 }
 
 // create an app
-func New() *Route {
+func New[T any]() *Route[T] {
+
 	// the default pattern is "/"
-	return newRoute("/")
+	return newRoute[T]("/")
+
 }
 
 // Creates a new Route
-func newRoute(pattern string) *Route {
+func newRoute[T any](pattern string) *Route[T] {
 
 	// create a new instance of Route
-	r := new(Route)
+	r := new(Route[T])
 
 	// assign it a serveMux
 	r.mux = http.NewServeMux()
@@ -63,17 +67,25 @@ func newRoute(pattern string) *Route {
 	r.pattern = pattern
 
 	// assign it an empty subRoutes map
-	r.subRoutes = make(map[string]*Route)
+	r.subRoutes = make(map[string]*Route[T])
 
 	// return
 	return r
 }
 
+func (r *Route[T]) SetData(data T) {
+	r.datastore = data
+}
+
+func (r *Route[T]) GetData() T {
+	return r.datastore
+}
+
 // Adds a subroute with the provided pattern and handler
-func (r *Route) Then(pattern string) *Route {
+func (r *Route[T]) Then(pattern string) *Route[T] {
 
 	// create new route
-	rt := newRoute(pattern)
+	rt := newRoute[T](pattern)
 
 	// add parent
 	rt.parent = r
@@ -92,7 +104,7 @@ func (r *Route) Then(pattern string) *Route {
 }
 
 // Appends middlewares to a route
-func (r *Route) Use(middlewares ...middleware) {
+func (r *Route[T]) Use(middlewares ...middleware) {
 
 	// for each middleware supplied, append the route's middleware
 	for _, m := range middlewares {
@@ -103,27 +115,27 @@ func (r *Route) Use(middlewares ...middleware) {
 // HANDLERS ///////////////////////////////////
 
 // adds a get handler to the route
-func (r *Route) Get(handler http.Handler) {
+func (r *Route[T]) Get(handler http.Handler) {
 	r.get = handler
 }
 
 // adds a post handler to the route
-func (r *Route) Post(handler http.Handler) {
+func (r *Route[T]) Post(handler http.Handler) {
 	r.post = handler
 }
 
 // adds a put handler to the route
-func (r *Route) Put(handler http.Handler) {
+func (r *Route[T]) Put(handler http.Handler) {
 	r.put = handler
 }
 
 // adds a delete handler to the route
-func (r *Route) Delete(handler http.Handler) {
+func (r *Route[T]) Delete(handler http.Handler) {
 	r.delete = handler
 }
 
 // Registers a route and all of its subRoutes recursively
-func (r *Route) Register(mux *http.ServeMux) {
+func (r *Route[T]) Register(mux *http.ServeMux) {
 
 	// apply the routes handlers to its servemux
 	r.applyRoutes()
@@ -139,7 +151,7 @@ func (r *Route) Register(mux *http.ServeMux) {
 }
 
 // Serve //////////////////////////////////////
-func (r *Route) Serve(port string) {
+func (r *Route[T]) Serve(port string) {
 
 	// create a new serveMux to handle all routes
 	// (the orignal serveMux created is responsible
@@ -168,7 +180,7 @@ func (r *Route) Serve(port string) {
 	}
 }
 
-func (r *Route) applyRoutes() {
+func (r *Route[T]) applyRoutes() {
 	// apply middlewares
 	r.applyMiddlewares()
 
@@ -183,7 +195,7 @@ func (r *Route) applyRoutes() {
 // apply a routes middleware by reassigning each handler
 // to the result of passing it (the handler), along with
 // the route objects middlewares into Chain()
-func (r *Route) applyMiddlewares() {
+func (r *Route[T]) applyMiddlewares() {
 	// apply middleware
 	r.get = Chain(r.get, r.middlewares...)
 	r.post = Chain(r.get, r.middlewares...)

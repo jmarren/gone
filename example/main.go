@@ -8,10 +8,20 @@ import (
 	"github.com/jmarren/gone/gone"
 )
 
+type appData struct {
+	username string
+}
+
 func main() {
 
 	// Creates a new gone application
-	gone := gone.New()
+	gone := gone.New[*appData]()
+
+	data := new(appData)
+
+	data.username = "john"
+
+	gone.SetData(data)
 
 	// the returned Route handles '/' by default
 
@@ -27,6 +37,7 @@ func main() {
 
 	songs.Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("songs route")
+		fmt.Printf("data: %s\n", songs.GetData().username)
 		w.Write([]byte("songs"))
 	}))
 
@@ -38,7 +49,7 @@ func main() {
 		w.Write([]byte("/users"))
 	}))
 
-	// append a route to the users/ route
+	// append a {id} route to the users/ route
 	id := users.Then("{id}")
 
 	// use some middlewares for the /users/{id} route
